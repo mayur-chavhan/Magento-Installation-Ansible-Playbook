@@ -11,8 +11,8 @@ php_version: 7.4
 mariadb_version: 10.3
 
 # Nginx configuration
-server_hostname: magento2.mgt
-magento_dir: /var/www/html/magento2.mgt
+server_hostname: mymagento.dev
+magento_dir: /var/www/html/mymagento.dev
 
 # Database configuration
 db_host: localhost
@@ -26,7 +26,7 @@ magento_private_key: <insert-piv-key-here>
 
 magento_mode: default
 
-base_url: http://magento2.mgt
+base_url: http://mymagento.dev
 use_rewrites: 1
 
 language: en_US
