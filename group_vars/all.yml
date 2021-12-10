@@ -1,0 +1,41 @@
+---
+# Server configuration
+timezone: Asia/Kolkata
+
+# nginx user
+nginx_user: www-data
+nginx_group: www-data
+
+# Package version
+php_version: 7.4
+mariadb_version: 10.3
+
+# Nginx configuration
+server_hostname: magento2.mgt
+magento_dir: /var/www/html/magento2.mgt
+
+# Database configuration
+db_host: localhost
+db_name: magento
+db_user: magento
+db_password: magento
+
+# Magento configuration - add your key here
+magento_public_key: <inser-pub-key-here>
+magento_private_key: <insert-piv-key-here>
+
+magento_mode: default
+
+base_url: http://magento2.mgt
+use_rewrites: 1
+
+language: en_US
+currency: USD
+
+backend_frontname: admin
+admin_firstname: admin
+admin_lastname: admin
+admin_email: admin@admin.com
+admin_user: admin
+admin_password: admin123
+

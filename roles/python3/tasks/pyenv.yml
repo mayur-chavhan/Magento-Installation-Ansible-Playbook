@@ -1,0 +1,53 @@
+---
+- name: Install Python using pyenv
+  environment:
+    PATH: "{{ ansible_env.PATH }}:{{ ansible_user_dir }}/.pyenv/bin"
+  block:
+    - name: Create download directory
+      file:
+        path: "{{ python3_tmpdir }}"
+        state: directory
+        mode: 0700
+      changed_when: false  # tmpdir role removes directory automatically
+
+    - name: Install latest version of pyenv
+      block:
+        - name: Download pyenv installer
+          get_url:
+            url: https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer
+            dest: "{{ python3_tmpdir }}"
+          changed_when: false  # temporary directory is removed when play ends
+
+        - name: Run pyenv installer
+          command: "bash pyenv-installer"
+          args:
+            chdir: "{{ python3_tmpdir }}"
+            creates: "{{ ansible_user_dir }}/.pyenv"
+
+        - name: Update login file
+          blockinfile:
+            path: "{{ item }}"
+            create: true
+            block: |
+              export PYENV_ROOT="$HOME/.pyenv"
+              export PATH="$PYENV_ROOT/bin:$PATH"
+              eval "$(pyenv init --path)"
+              eval "$(pyenv virtualenv-init -)"
+            mode: 0644
+          loop:
+            - "{{ python3_shellrc }}"
+            - "~/.profile"  # for non-interactive uses of /bin/sh
+
+    - name: Install Python
+      block:
+        - name: Install Python
+          command: "pyenv install {{ python3_pyenv }}"
+          args:
+            creates: "{{ ansible_user_dir }}/.pyenv/versions/{{ python3_pyenv }}"
+
+        - name: Execute pyenv rehash
+          command: "pyenv rehash"
+
+        - name: Define python3 command
+          set_fact:  # can't rely on changes to $PATH yet
+            python3_command: "{{ ansible_user_dir }}/.pyenv/shims/{{ python3_command }}"

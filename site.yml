@@ -1,0 +1,21 @@
+---
+- name: Install Magento 2
+  hosts: localhost
+  remote_user: root
+  become: yes
+
+  vars:
+    php_version: '7.4'
+
+  roles:
+    - common
+    - python3
+    - geerlingguy.java
+    - geerlingguy.elasticsearch
+    - geerlingguy.redis
+    - geerlingguy.php-versions
+    - geerlingguy.php
+    - mariadb
+    - composer
+    - magento
+    - nginx

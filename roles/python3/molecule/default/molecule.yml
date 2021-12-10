@@ -1,0 +1,41 @@
+---
+dependency:
+  name: galaxy
+  options:
+    role-file: "molecule/requirements.yml"
+driver:
+  name: docker
+lint: |
+  set -e
+  yamllint .
+  ansible-lint
+  flake8 --exclude=.venv/
+platforms:
+  - name: EL7
+    image: centos:7
+  - name: Xenial
+    image: ubuntu:16.04
+  - name: Bionic
+    image: ubuntu:18.04
+  - name: Focal
+    image: ubuntu:20.04
+provisioner:
+  name: ansible
+verifier:
+  name: testinfra
+scenario:
+  test_sequence:
+    # Override default sequence to disable idempotence command.
+    - dependency
+    - lint
+    - cleanup
+    - destroy
+    - syntax
+    - create
+    - prepare
+    - converge
+    # - idempotence  # TODO
+    - side_effect
+    - verify
+    - cleanup
+    - destroy

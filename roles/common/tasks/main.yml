@@ -1,0 +1,46 @@
+---
+- name: Update Repository and Full-Upgrade Packages
+  apt:
+    update_cache: yes
+    upgrade: full
+
+- name: Installing Extra Packages [Zip, Wget, Curl, Git]
+  become: true
+  become_user: root
+  action: >
+    {{ ansible_pkg_mgr }} name=htop,zip,unzip,curl,wget,nano,git state=present update_cache=yes
+
+- name: Set Server Timezone to {{ timezone }}
+  timezone:
+    name: "{{ timezone }}"
+
+# add sudo user 
+# - name: add sudo user
+#   become: yes
+#   become_user: root
+#   user:
+#     name: "{{ sudo_user }}"
+#     state: present
+#     groups: sudo
+#     append: yes
+
+# - name: Make sure we have a 'sudo' group
+#   group:
+#     name: sudo
+#     state: present
+
+# - name: Allow 'sudoers' group to have passwordless sudo
+#   lineinfile:
+#     dest: /etc/sudoers
+#     state: present
+#     regexp: '^%sudo'
+#     line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+#     validate: 'visudo -cf %s'
+
+# - name: Add sudoers users to wheel group
+#   user:
+#     name="{{ sudo_user }}"
+#     groups=sudo
+#     append=yes
+#     state=present
+#     createhome=yes

@@ -1,0 +1,136 @@
+---
+- name: Set Magento Access Keys for Composer
+  command: composer global config http-basic.repo.magento.com "{{ magento_public_key }}" "{{ magento_private_key }}"
+#  become: yes
+#  become_user: "{{ nginx_user }}"
+
+- name: Check Magento Directory exists
+  stat:
+    path: "{{ magento_dir }}"
+  register: magento_dir_exists
+
+- name: Magento Directory Already exists
+  debug:
+    msg: "Magento APP is already installed "
+  when: magento_dir_exists.stat.exists
+
+- name: Create the Magento Open Source Project
+  command: composer create-project --repository=https://repo.magento.com/ magento/project-community-edition {{ magento_dir }}
+
+- name: Set Files Permissions to g+w
+  command: find var generated vendor pub/static pub/media app/etc -type f -exec chmod g+w {} \;
+  args:
+    chdir: "{{ magento_dir }}"
+  changed_when: yes
+
+- name: Set Directories Permissions to g+ws
+  command: find var generated vendor pub/static pub/media app/etc -type d -exec chmod g+ws {} \;
+  args:
+    chdir: "{{ magento_dir }}"
+  changed_when: yes
+
+- name: Set Files and Directories Group User
+  file:
+    dest: "{{ magento_dir }}"
+    group: "{{ nginx_group }}"
+    recurse: yes
+
+- name: Set Permission u+x to bin/magento
+  file:
+    path: "{{ magento_dir }}/bin/magento"
+    mode: u+x
+
+- name: Install Magento
+  command: |
+    php bin/magento setup:install \
+    --base-url="{{ base_url }}" \
+    --db-host="{{ db_host }}" \
+    --db-name="{{ db_name }}" \
+    --db-user="{{ db_user }}" \
+    --db-password="{{ db_password }}" \
+    --backend-frontname="{{ backend_frontname }}" \
+    --admin-firstname="{{ admin_firstname }}" \
+    --admin-lastname="{{ admin_lastname }}" \
+    --admin-email="{{ admin_email }}" \
+    --admin-user="{{ admin_user }}" \
+    --admin-password="{{ admin_password }}" \
+    --language="{{ language }}" \
+    --currency="{{ currency }}" \
+    --timezone="{{ timezone }}" \
+    --use-rewrites="{{ use_rewrites }}" \
+    --search-engine=elasticsearch7  \
+    --elasticsearch-host=localhost  \
+    --elasticsearch-port=9200
+
+  args:
+    chdir: "{{ magento_dir }}"
+  changed_when: true
+  
+- name: Change Magento Deployment Mode
+  command: php bin/magento deploy:mode:set "{{ magento_mode }}"
+  args:
+    chdir: "{{ magento_dir }}"
+
+# deploy sample data magento
+# - name: Deploy Sample Data
+#   command: php -d memory_limit=-1 bin/magento sampledata:deploy
+#   args:
+#     chdir: "{{ magento_dir }}"
+   
+
+# disable 2fa magento
+- name: Disable 2FA
+  command: php bin/magento module:disable Magento_TwoFactorAuth
+  args:
+    chdir: "{{ magento_dir }}"
+
+# setup upgrade magento
+- name: Setup Upgrade
+  command: php -d memory_limit=-1 bin/magento setup:upgrade
+  args:
+    chdir: "{{ magento_dir }}"
+   
+
+# setup di compile magento
+- name: Setup Di Compile
+  command: php -d memory_limit=-1 bin/magento setup:di:compile
+  args:
+    chdir: "{{ magento_dir }}"
+   
+
+# setup config set redis
+- name: Setup Config Set Redis
+  command: php bin/magento setup:config:set --cache-backend=redis --cache-backend-redis-server=127.0.0.1 --page-cache-redis-db=1
+  args:
+    chdir: "{{ magento_dir }}"
+   
+
+- name: Deploy the Static Content
+  command: php -d memory_limit=-1 bin/magento setup:static-content:deploy -f
+  args:
+    chdir: "{{ magento_dir }}"
+  
+
+- name: Run Reindexer
+  command: php -d memory_limit=-1 bin/magento indexer:reindex
+  args:
+    chdir: "{{ magento_dir }}"
+  
+
+- name: Flush Cache
+  command: php bin/magento cache:flush
+  args:
+    chdir: "{{ magento_dir }}"
+  
+
+- name: Enable Cache
+  command: php bin/magento cache:enable
+  args:
+    chdir: "{{ magento_dir }}"
+  
+
+- name: Add Magento to Cron
+  command: php bin/magento cron:install
+  args:
+    chdir: "{{ magento_dir }}"
+  

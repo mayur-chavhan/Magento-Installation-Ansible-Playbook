@@ -1,0 +1,42 @@
+---
+- name: Install MariaDB {{ mariadb_version }}
+  apt:
+    name: [
+      "mariadb-server-{{ mariadb_version }}",
+      "mariadb-client-{{ mariadb_version }}",
+      "python3-pip",
+      "python3-mysqldb"
+    ] 
+    state: present
+
+- name: Add MariaDB (MySQL) Configuration File
+  template:
+    src: my.cnf.j2
+    dest: /etc/mysql/mariadb.conf.d/my.cnf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+  notify:
+  - Restart MariaDB Service
+
+- name: Start MariaDB Service
+  service:
+    name: mariadb
+    state: started
+    enabled: true
+
+# create mysql user
+- name: Set Magento Database User
+  mysql_user:
+    name: "{{ db_user }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    password: "{{ db_password }}"
+    priv: "*.*:ALL"
+    state: present
+
+- name: Set Magento Database
+  mysql_db:
+    name: "{{ db_name }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    state: present
